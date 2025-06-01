@@ -1,24 +1,27 @@
 import osUtils from 'os-utils';
-import { resolve } from 'path';
-import fs, { stat } from 'fs'
+import fs from 'fs'
 import os from 'os';
-import { getHeapStatistics } from 'process';
-const POLLING_INTERVAL = 500;
+import { BrowserWindow } from 'electron';
+import { ipcWebContentsSend } from './util.js';
+const POLLING_INTERVAL = 100;
 
-export function pollResources() {
+export function pollResources(mainWindow: BrowserWindow) {
     setInterval( async () => {
         const cpuUsage = await getCpuUsage();
         const ramUsage = getRamUsage();
         const storageData = getStorageData();
-        
-        console.log( { cpuUsage, ramUsage , storageUsage: storageData.usage })
+        ipcWebContentsSend("statistics", mainWindow.webContents, { 
+            cpuUsage , 
+            ramUsage , 
+            storageUsage: storageData.usage 
+        });
     }, POLLING_INTERVAL);
 }
 
-export function getCpuUsage() {
+export function getCpuUsage(): Promise<number> {
     return new Promise((resolve)=>{
         osUtils.cpuUsage(resolve);
-    })
+    });
 }
 
 export function getRamUsage() {
